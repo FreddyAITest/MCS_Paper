@@ -19,7 +19,7 @@ MCS_Paper/
 │   │   └── executive_summary.md # Management Summary
 │   └── methodology/              # Methodische Grundlagen
 │       ├── distributions.md      # Verteilungsannahmen und Begründung
-│       └── roi_model.md          # 数学公式 des ROI-Modells
+│       └── roi_model.md          # Formeln des ROI-Modells
 ├── src/
 │   ├── simulation/
 │   │   ├── mcs_engine.py         # Kern-Simulations-Engine

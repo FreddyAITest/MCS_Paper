@@ -1,68 +1,84 @@
-"""Tests for ROI calculator."""
-import numpy as np
+"""Tests for the ROI calculator."""
 import pytest
-from src.simulation.roi_calculator import compute_roi, compute_roi_components
+import numpy as np
+import sys
+import os
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src', 'simulation'))
+
+from roi_calculator import compute_roi, compute_roi_components
 
 
 class TestComputeROI:
-    def test_simple_case(self):
-        """Basic ROI calculation with known values."""
-        # ROI = (70 * 150M - 750M - 120M) / 750M = (10500M - 870M) / 750M = 12.84
-        capex = np.array([750e6])
-        opex = np.array([120e6])
-        volume = np.array([150e6])
-        oil_price = np.array([70])
-        
-        roi = compute_roi(capex, opex, volume, oil_price)
-        expected = (70 * 150e6 - 750e6 - 120e6) / 750e6
-        assert abs(roi[0] - expected) < 1e-6
+    """Test suite for compute_roi."""
 
-    def test_zero_profit(self):
-        """ROI should be 0 when revenue equals costs."""
-        # revenue = 70 * 10 = 700, costs = 400 + 300 = 700 => ROI = 0
-        capex = np.array([400])
-        opex = np.array([300])
-        volume = np.array([10])
-        oil_price = np.array([70])
-        
+    def test_simple_break_even(self):
+        """When revenue equals total cost, ROI should be zero."""
+        capex = np.array([100.0])
+        opex = np.array([20.0])
+        volume = np.array([10.0])
+        oil_price = np.array([12.0])  # revenue = 12 * 10 = 120 = capex + opex
         roi = compute_roi(capex, opex, volume, oil_price)
-        assert abs(roi[0]) < 1e-10
+        assert roi[0] == pytest.approx(0.0)
+
+    def test_positive_roi(self):
+        capex = np.array([100.0])
+        opex = np.array([20.0])
+        volume = np.array([10.0])
+        oil_price = np.array([20.0])  # revenue = 200, cost = 120, profit = 80
+        roi = compute_roi(capex, opex, volume, oil_price)
+        assert roi[0] == pytest.approx(0.8)
 
     def test_negative_roi(self):
-        """ROI should be negative when costs exceed revenue."""
-        capex = np.array([1000])
-        opex = np.array([500])
-        volume = np.array([10])
-        oil_price = np.array([10])  # very low price
-        
+        capex = np.array([100.0])
+        opex = np.array([20.0])
+        volume = np.array([10.0])
+        oil_price = np.array([5.0])  # revenue = 50, cost = 120, profit = -70
         roi = compute_roi(capex, opex, volume, oil_price)
-        assert roi[0] < 0
+        assert roi[0] == pytest.approx(-0.7)
 
-    def test_array_input(self):
-        """Should work with arrays of different values."""
-        n = 1000
-        capex = np.full(n, 750e6)
-        opex = np.full(n, 120e6)
-        volume = np.full(n, 150e6)
-        oil_price = np.full(n, 70)
-        
+    def test_array_computation(self):
+        n = 5
+        capex = np.full(n, 100.0)
+        opex = np.full(n, 20.0)
+        volume = np.full(n, 10.0)
+        oil_price = np.full(n, 15.0)
         roi = compute_roi(capex, opex, volume, oil_price)
-        assert roi.shape == (n,)
-        assert np.all(roi > 0)  # all should be positive with these inputs
+        assert len(roi) == n
+        assert np.allclose(roi, 0.3)
+
+    def test_formula_equivalence(self):
+        """verify ROI = (P*V - CAPEX - OPEX) / CAPEX"""
+        capex = np.array([500e6, 750e6, 1000e6])
+        opex = np.array([100e6, 120e6, 150e6])
+        volume = np.array([100e6, 150e6, 200e6])
+        oil_price = np.array([70.0, 80.0, 90.0])
+        roi = compute_roi(capex, opex, volume, oil_price)
+        expected = (oil_price * volume - capex - opex) / capex
+        assert np.allclose(roi, expected)
 
 
 class TestComputeROIComponents:
-    def test_components_return_dict(self):
-        """Should return a dict with all expected keys."""
-        capex = np.array([750e6])
-        opex = np.array([120e6])
-        volume = np.array([150e6])
-        oil_price = np.array([70])
-        
+    """Test suite for compute_roi_components."""
+
+    def test_component_breakdown(self):
+        capex = np.array([100.0])
+        opex = np.array([20.0])
+        volume = np.array([10.0])
+        oil_price = np.array([15.0])
         result = compute_roi_components(capex, opex, volume, oil_price)
-        assert 'revenue' in result
-        assert 'total_cost' in result
-        assert 'profit' in result
-        assert 'roi' in result
-        assert 'revenue_per_capex' in result
-        assert 'opex_per_capex' in result
+        assert "revenue" in result
+        assert "total_cost" in result
+        assert "profit" in result
+        assert "roi" in result
+        assert "revenue_per_capex" in result
+        assert "opex_per_capex" in result
+
+    def test_revenue_calculation(self):
+        capex = np.array([100.0])
+        opex = np.array([20.0])
+        volume = np.array([10.0])
+        oil_price = np.array([15.0])
+        result = compute_roi_components(capex, opex, volume, oil_price)
+        assert result["revenue"][0] == pytest.approx(150.0)
+        assert result["total_cost"][0] == pytest.approx(120.0)

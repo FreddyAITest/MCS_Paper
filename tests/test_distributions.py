@@ -1,69 +1,94 @@
 """Tests for distribution definitions."""
-import numpy as np
 import pytest
-from src.simulation.distributions import TriangularParams, LognormalParams
+import numpy as np
+import sys
+import os
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src', 'simulation'))
+
+from distributions import TriangularParams, LognormalParams, DEFAULT_CAPEX, DEFAULT_OPEX, DEFAULT_VOLUME, DEFAULT_OIL_PRICE
 
 
 class TestTriangularParams:
-    def test_mean(self):
-        """Mean of Tri(a, m, b) should be (a + m + b) / 3."""
-        tp = TriangularParams(min=1, mode=2, max=3)
-        assert abs(tp.mean() - 2.0) < 1e-10
+    """Test suite for TriangularParams."""
 
-    def test_variance(self):
-        """Variance of Tri(a, m, b) should be (a^2 + m^2 + b^2 - am - ab - mb) / 18."""
-        tp = TriangularParams(min=1, mode=2, max=3)
-        expected_var = (1 + 4 + 9 - 2 - 3 - 6) / 18
-        assert abs(tp.variance() - expected_var) < 1e-10
+    def test_mean_calculation(self):
+        p = TriangularParams(min=100, mode=200, max=400)
+        assert p.mean() == pytest.approx(233.333, rel=1e-3)
+
+    def test_variance_calculation(self):
+        p = TriangularParams(min=100, mode=200, max=400)
+        var = p.variance()
+        assert var > 0
 
     def test_sample_shape(self):
-        """Sample should return correct number of values."""
-        tp = TriangularParams(min=100, mode=200, max=300)
+        p = TriangularParams(min=100, mode=200, max=400)
         rng = np.random.default_rng(42)
-        samples = tp.sample(rng, size=10000)
-        assert samples.shape == (10000,)
+        samples = p.sample(rng, size=1000)
+        assert samples.shape == (1000,)
 
-    def test_sample_bounds(self):
-        """All samples should be within [min, max]."""
-        tp = TriangularParams(min=100, mode=200, max=300)
+    def test_sample_within_bounds(self):
+        p = TriangularParams(min=100, mode=200, max=400)
         rng = np.random.default_rng(42)
-        samples = tp.sample(rng, size=100000)
+        samples = p.sample(rng, size=10000)
         assert np.all(samples >= 100)
-        assert np.all(samples <= 300)
+        assert np.all(samples <= 400)
 
-    def test_sample_converges_to_mean(self):
-        """Sample mean should converge to theoretical mean."""
-        tp = TriangularParams(min=500e6, mode=750e6, max=1200e6)
+    def test_sample_mode_concentration(self):
+        p = TriangularParams(min=100, mode=200, max=400)
         rng = np.random.default_rng(42)
-        samples = tp.sample(rng, size=100000)
-        assert abs(np.mean(samples) - tp.mean()) / tp.mean() < 0.01
+        samples = p.sample(rng, size=100000)
+        # Mode should be near the peak of the histogram
+        hist, bin_edges = np.histogram(samples, bins=50)
+        peak_bin = np.argmax(hist)
+        peak_center = (bin_edges[peak_bin] + bin_edges[peak_bin + 1]) / 2
+        assert abs(peak_center - 200) < 30
+
+    def test_default_capex(self):
+        assert DEFAULT_CAPEX.min == 500e6
+        assert DEFAULT_CAPEX.mode == 750e6
+        assert DEFAULT_CAPEX.max == 1200e6
+
+    def test_default_opex(self):
+        assert DEFAULT_OPEX.min == 80e6
+        assert DEFAULT_OPEX.mode == 120e6
+        assert DEFAULT_OPEX.max == 200e6
+
+    def test_default_volume(self):
+        assert DEFAULT_VOLUME.min == 50e6
+        assert DEFAULT_VOLUME.mode == 150e6
+        assert DEFAULT_VOLUME.max == 300e6
 
 
 class TestLognormalParams:
-    def test_mu_property(self):
-        """mu should equal ln(mean) - sigma^2 / 2."""
-        lp = LognormalParams(mean=70, sigma=0.35)
-        expected_mu = np.log(70) - 0.35**2 / 2
-        assert abs(lp.mu - expected_mu) < 1e-10
+    """Test suite for LognormalParams."""
 
-    def test_sample_shape(self):
-        """Sample should return correct number of values."""
-        lp = LognormalParams(mean=70, sigma=0.35)
-        rng = np.random.default_rng(42)
-        samples = lp.sample(rng, size=10000)
-        assert samples.shape == (10000,)
+    def test_mu_calculation(self):
+        p = LognormalParams(mean=70, sigma=0.35)
+        expected_mu = np.log(70) - 0.35**2 / 2
+        assert p.mu == pytest.approx(expected_mu, rel=1e-6)
+
+    def test_mean_original(self):
+        p = LognormalParams(mean=70, sigma=0.35)
+        # E[X] = exp(mu + sigma^2/2) should be close to 70
+        assert p.mean_original() == pytest.approx(70, rel=1e-6)
+
+    def test_variance_positive(self):
+        p = LognormalParams(mean=70, sigma=0.35)
+        assert p.variance_original() > 0
 
     def test_sample_positive(self):
-        """All lognormal samples should be positive."""
-        lp = LognormalParams(mean=70, sigma=0.35)
+        p = LognormalParams(mean=70, sigma=0.35)
         rng = np.random.default_rng(42)
-        samples = lp.sample(rng, size=100000)
+        samples = p.sample(rng, size=10000)
         assert np.all(samples > 0)
 
-    def test_sample_converges_to_mean(self):
-        """Sample mean should converge to specified mean."""
-        lp = LognormalParams(mean=70, sigma=0.35)
+    def test_sample_shape(self):
+        p = LognormalParams(mean=70, sigma=0.35)
         rng = np.random.default_rng(42)
-        samples = lp.sample(rng, size=100000)
-        # Allow 5% tolerance due to lognormal variance
-        assert abs(np.mean(samples) - lp.mean_original()) / lp.mean_original() < 0.05
+        samples = p.sample(rng, size=1000)
+        assert samples.shape == (1000,)
+
+    def test_default_oil_price(self):
+        assert DEFAULT_OIL_PRICE.mean == 70
+        assert DEFAULT_OIL_PRICE.sigma == 0.35

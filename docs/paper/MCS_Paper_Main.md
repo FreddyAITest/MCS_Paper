@@ -48,7 +48,7 @@ Das Ziel dieses Papers ist die Entwicklung und Darstellung eines stochastischen 
 
 Die klassische Investitionsrechnung kennt mehrere Verfahren zur Bewertung von Investitionen: Statische Verfahren (Rentabilitätsrechnung, Amortisationsrechnung) und dynamische Verfahren (Kapitalwertmethode, Interner Zinsfuss, Annuitätenmethode). Allen gemeinsam ist, dass sie in der Regel mit deterministischen Cashflows arbeiten.
 
-Der traditionelle 资本回报率 (capital return) berechnet sich gemäß:
+Der traditionelle Return on Investment (ROI) berechnet sich gemäß:
 
 ```
 ROI = (Gewinn / Investition) × 100%

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCS ROI Simulator — Monte-Carlo-Simulation</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #1a1a2e; color: #e0e0e0; padding: 20px; }
+  h1 { text-align: center; color: #00d4ff; margin-bottom: 5px; font-size: 1.6em; }
+  .subtitle { text-align: center; color: #888; margin-bottom: 25px; font-size: 0.85em; }
+  .container { display: grid; grid-template-columns: 300px 1fr; gap: 20px; max-width: 1200px; margin: 0 auto; }
+  .panel { background: #16213e; border-radius: 12px; padding: 20px; }
+  .panel h2 { color: #00d4ff; font-size: 1em; margin-bottom: 12px; border-bottom: 1px solid #0f3460; padding-bottom: 6px; }
+  label { display: block; color: #aaa; font-size: 0.75em; margin-top: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+  input[type="range"] { width: 100%; margin: 4px 0; accent-color: #00d4ff; }
+  input[type="number"] { width: 100%; background: #0f3460; border: 1px solid #1a4080; color: #e0e0e0; padding: 6px 8px; border-radius: 6px; font-size: 0.85em; }
+  .value-display { color: #00d4ff; font-weight: bold; font-size: 0.85em; }
+  button { width: 100%; padding: 12px; background: linear-gradient(135deg, #00d4ff, #0078d4); border: none; border-radius: 8px; color: white; font-size: 1em; font-weight: bold; cursor: pointer; margin-top: 15px; }
+  button:hover { background: linear-gradient(135deg, #00e4ff, #0088e4); }
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .stat-card { background: #0f3460; border-radius: 8px; padding: 14px; text-align: center; }
+  .stat-card .stat-label { color: #888; font-size: 0.7em; text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-card .stat-value { color: #00d4ff; font-size: 1.4em; font-weight: bold; }
+  .stat-card.negative .stat-value { color: #e74c3c; }
+  .stat-card.positive .stat-value { color: #27ae60; }
+  .chart-area { min-height: 350px; background: #0f3460; border-radius: 12px; position: relative; overflow: hidden; }
+  canvas { width: 100% !important; height: 100% !important; }
+  .scenario-buttons { display: flex; gap: 6px; margin-top: 12px; }
+  .scenario-btn { flex: 1; padding: 6px; background: #0f3460; border: 1px solid #1a4080; border-radius: 6px; color: #aaa; cursor: pointer; font-size: 0.7em; text-align: center; }
+  .scenario-btn:hover { border-color: #00d4ff; color: #e0e0e0; }
+  .distribution-label { font-size: 0.65em; color: #666; margin-top: 2px; }
+</style>
+</head>
+<body>
+<h1>MCS ROI Simulator</h1>
+<p class="subtitle">Monte-Carlo-Simulation fuer oelindustrielle Investitionsrenditen</p>
+
+<div class="container">
+  <div class="panel" id="controls">
+    <h2>Simulationsparameter</h2>
+
+    <label>Iterationen (N)</label>
+    <input type="number" id="iterations" value="10000" min="1000" max="100000" step="1000">
+    <span class="distribution-label">Anzahl der Monte-Carlo-Durchlaufe</span>
+
+    <hr style="border-color:#1a4080;margin:12px 0;">
+
+    <label>CAPEX — Investitionskosten (Mio $)</label>
+    <small class="distribution-label" style="color:#00d4ff;">Dreiecksverteilung</small>
+    <div style="display:flex;gap:6px;">
+      <div style="flex:1"><label style="font-size:0.6em;color:#666;">Min</label><input type="number" id="capex-min" value="500"></div>
+      <div style="flex:1"><label style="font-size:0.6em;color:#666;">Modus</label><input type="number" id="capex-mode" value="750"></div>
+      <div style="flex:1"><label style="font-size:0.6em;color:#666;">Max</label><input type="number" id="capex-max" value="1200"></div>
+    </div>
+
+    <label>OPEX — Betriebskosten (Mio $/Jahr)</label>
+    <small class="distribution-label" style="color:#00d4ff;">Dreiecksverteilung</small>
+    <div style="display:flex;gap:6px;">
+      <div style="flex:1"><label style="font-size:0.6em;color:#666;">Min</label><input type="number" id="opex-min" value="80"></div>
+      <div style="flex:1"><label style="font-size:0.6em;color:#666;">Modus</label><input type="number" id="opex-mode" value="120"></div>
+      <div style="flex:1"><label style="font-size:0.6em;color:#666;">Max</label><input type="number" id="opex-max" value="200"></div>
+    </div>
+
+    <label>Foerdervolumen (Mio Barrel)</label>
+    <small class="distribution-label" style="color:#00d4ff;">Dreiecksverteilung</small>
+    <div style="display:flex;gap:6px;">
+      <div style="flex:1"><label style="font-size:0.6em;color:#666;">Min</label><input type="number" id="vol-min" value="50"></div>
+      <div style="flex:1"><label style="font-size:0.6em;color:#666;">Modus</label><input type="number" id="vol-mode" value="150"></div>
+      <div style="flex:1"><label style="font-size:0.6em;color:#666;">Max</label><input type="number" id="vol-max" value="300"></div>
+    </div>
+
+    <label>Oelpreis ($/Barrel)</label>
+    <small class="distribution-label" style="color:#00d4ff;">Lognormalverteilung</small>
+    <div style="display:flex;gap:6px;">
+      <div style="flex:1"><label style="font-size:0.6em;color:#666;">Mittelwert</label><input type="number" id="oil-mean" value="70" step="1"></div>
+      <div style="flex:1"><label style="font-size:0.6em;color:#666;">Sigma</label><input type="number" id="oil-sigma" value="0.35" step="0.01"></div>
+    </div>
+
+    <button onclick="runSimulation()">▶ Simulation starten</button>
+    <div class="scenario-buttons">
+      <div class="scenario-btn" onclick="loadScenario('baseline')">Baseline</div>
+      <div class="scenario-btn" onclick="loadScenario('optimistic')">Optimistisch</div>
+      <div class="scenario-btn" onclick="loadScenario('pessimistic')">Pessimistisch</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Ergebnisse</h2>
+    <div class="stats-grid" id="stats">
+      <div class="stat-card positive"><div class="stat-label">Mean ROI</div><div class="stat-value" id="stat-mean">—</div></div>
+      <div class="stat-card positive"><div class="stat-label">Median (P50)</div><div class="stat-value" id="stat-median">—</div></div>
+      <div class="stat-card"><div class="stat-label">Std. Abweichung</div><div class="stat-value" id="stat-std">—</div></div>
+      <div class="stat-card"><div class="stat-label">RARR</div><div class="stat-value" id="stat-rarr">—</div></div>
+      <div class="stat-card negative"><div class="stat-label">VaR 5%</div><div class="stat-value" id="stat-var">—</div></div>
+      <div class="stat-card negative"><div class="stat-label">P(Verlust)</div><div class="stat-value" id="stat-loss">—</div></div>
+      <div class="stat-card"><div class="stat-label">Min ROI</div><div class="stat-value" id="stat-min">—</div></div>
+      <div class="stat-card"><div class="stat-label">Max ROI</div><div class="stat-value" id="stat-max">—</div></div>
+    </div>
+    <br>
+    <div class="chart-area"><canvas id="histogram"></canvas></div>
+  </div>
+</div>
+
+<script>
+// Simple Box-Muller for normal distribution (used for lognormal)
+function randn() {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+}
+
+function sampleTriangular(a, m, b) {
+  const u = Math.random();
+  if (u < (m - a) / (b - a)) {
+    return a + Math.sqrt(u * (b - a) * (m - a));
+  } else {
+    return b - Math.sqrt((1 - u) * (b - a) * (b - m));
+  }
+}
+
+function sampleLognormal(mean, sigma) {
+  const mu = Math.log(mean) - sigma * sigma / 2;
+  return Math.exp(mu + sigma * randn());
+}
+
+function val(id) { return parseFloat(document.getElementById(id).value); }
+
+const SCENARIOS = {
+  baseline: { 'capex-min':500,'capex-mode':750,'capex-max':1200, 'opex-min':80,'opex-mode':120,'opex-max':200, 'vol-min':50,'vol-mode':150,'vol-max':300, 'oil-mean':70,'oil-sigma':0.35 },
+  optimistic: { 'capex-min':400,'capex-mode':600,'capex-max':900, 'opex-min':60,'opex-mode':90,'opex-max':150, 'vol-min':80,'vol-mode':200,'vol-max':400, 'oil-mean':85,'oil-sigma':0.30 },
+  pessimistic: { 'capex-min':600,'capex-mode':900,'capex-max':1500, 'opex-min':100,'opex-mode':160,'opex-max':280, 'vol-min':30,'vol-mode':100,'vol-max':200, 'oil-mean':55,'oil-sigma':0.40 }
+};
+
+function loadScenario(name) {
+  const s = SCENARIOS[name];
+  for (const [k, v] of Object.entries(s)) {
+    document.getElementById(k).value = v;
+  }
+  runSimulation();
+}
+
+function runSimulation() {
+  const N = Math.max(100, val('iterations'));
+  const capexMin = val('capex-min') * 1e6;
+  const capexMode = val('capex-mode') * 1e6;
+  const capexMax = val('capex-max') * 1e6;
+  const opexMin = val('opex-min') * 1e6;
+  const opexMode = val('opex-mode') * 1e6;
+  const opexMax = val('opex-max') * 1e6;
+  const volMin = val('vol-min') * 1e6;
+  const volMode = val('vol-mode') * 1e6;
+  const volMax = val('vol-max') * 1e6;
+  const oilMean = val('oil-mean');
+  const oilSigma = val('oil-sigma');
+
+  const rois = new Float64Array(N);
+  for (let i = 0; i < N; i++) {
+    const capex = sampleTriangular(capexMin, capexMode, capexMax);
+    const opex = sampleTriangular(opexMin, opexMode, opexMax);
+    const vol = sampleTriangular(volMin, volMode, volMax);
+    const price = sampleLognormal(oilMean, oilSigma);
+    rois[i] = (price * vol - capex - opex) / capex;
+  }
+
+  const sorted = Float64Array.from(rois).sort();
+  const mean = rois.reduce((a, b) => a + b, 0) / N;
+  const median = sorted[Math.floor(N / 2)];
+  const std = Math.sqrt(rois.reduce((a, b) => a + (b - mean) ** 2, 0) / N);
+  const var5 = sorted[Math.floor(N * 0.05)];
+  const lossProb = rois.filter(r => r < 0).length / N;
+  const minRoi = sorted[0];
+  const maxRoi = sorted[N - 1];
+  const rarr = std > 0 ? mean / std : Infinity;
+
+  document.getElementById('stat-mean').textContent = (mean * 100).toFixed(1) + '%';
+  document.getElementById('stat-median').textContent = (median * 100).toFixed(1) + '%';
+  document.getElementById('stat-std').textContent = (std * 100).toFixed(1) + '%';
+  document.getElementById('stat-rarr').textContent = rarr.toFixed(2);
+  document.getElementById('stat-var').textContent = (var5 * 100).toFixed(1) + '%';
+  document.getElementById('stat-loss').textContent = (lossProb * 100).toFixed(1) + '%';
+  document.getElementById('stat-min').textContent = (minRoi * 100).toFixed(1) + '%';
+  document.getElementById('stat-max').textContent = (maxRoi * 100).toFixed(1) + '%';
+
+  // Draw histogram
+  drawHistogram(rois, mean, median, var5, lossProb);
+}
+
+function drawHistogram(rois, mean, median, var5, lossProb) {
+  const canvas = document.getElementById('histogram');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = rect.height;
+
+  ctx.fillStyle = '#0f3460';
+  ctx.fillRect(0, 0, W, H);
+
+  const pad = { left: 60, right: 20, top: 20, bottom: 40 };
+  const plotW = W - pad.left - pad.right;
+  const plotH = H - pad.top - pad.bottom;
+
+  const minVal = Math.min(...rois);
+  const maxVal = Math.max(...rois);
+  const range = maxVal - minVal || 1;
+  const bins = 60;
+  const binWidth = range / bins;
+  const counts = new Array(bins).fill(0);
+  for (const r of rois) {
+    const idx = Math.min(Math.floor((r - minVal) / binWidth), bins - 1);
+    counts[idx]++;
+  }
+  const maxCount = Math.max(...counts);
+  const barW = plotW / bins;
+
+  // Draw bars
+  for (let i = 0; i < bins; i++) {
+    const x = pad.left + i * barW;
+    const barH = (counts[i] / maxCount) * plotH;
+    const y = pad.top + plotH - barH;
+    const binCenter = minVal + (i + 0.5) * binWidth;
+    ctx.fillStyle = binCenter < 0 ? '#e74c3c' : '#3498db';
+    ctx.globalAlpha = 0.8;
+    ctx.fillRect(x, y, barW - 1, barH);
+  }
+  ctx.globalAlpha = 1.0;
+
+  // Axis labels
+  ctx.fillStyle = '#aaa';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'center';
+  for (let i = 0; i <= 5; i++) {
+    const v = minVal + (range * i) / 5;
+    const x = pad.left + (plotW * i) / 5;
+    ctx.fillText((v * 100).toFixed(0) + '%', x, H - 10);
+  }
+
+  // Draw mean line
+  const meanX = pad.left + ((mean - minVal) / range) * plotW;
+  ctx.strokeStyle = '#2c3e50';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(meanX, pad.top); ctx.lineTo(meanX, pad.top + plotH); ctx.stroke();
+  ctx.fillStyle = '#ecf0f1';
+  ctx.font = 'bold 11px sans-serif';
+  ctx.fillText('Mean', meanX + 4, pad.top + 14);
+
+  // Draw zero line
+  if (minVal < 0 && maxVal > 0) {
+    const zeroX = pad.left + ((0 - minVal) / range) * plotW;
+    ctx.strokeStyle = '#f39c12';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 3]);
+    ctx.beginPath(); ctx.moveTo(zeroX, pad.top); ctx.lineTo(zeroX, pad.top + plotH); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#f39c12';
+    ctx.fillText('Break-even', zeroX + 4, pad.top + 30);
+  }
+}
+
+// Auto-run on load
+window.addEventListener('load', runSimulation);
+</script>
+</body>
+</html>

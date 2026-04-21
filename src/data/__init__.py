@@ -1,0 +1,1 @@
+"""Data module — configuration and sample data for MCS simulations."""

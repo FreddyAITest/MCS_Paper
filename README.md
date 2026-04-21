@@ -1,91 +1,92 @@
-# MCS_Paper
+# MCS_Paper — Monte-Carlo-Simulation zur ROI-Bewertung in der Ölindustrie
 
-1. Das wissenschaftliche Setup: Variablen und Verteilungen
+Ein wissenschaftliches Projekt zur stochastischen Modellierung von Investitionsrenditen (ROI) in der Öl- und Gasindustrie mittels Monte-Carlo-Simulation.
 
-Für eine Monte-Carlo-Simulation brauchst du stochastische Inputgrößen. Da ihr Antragsdaten auswertet, basieren diese oft auf Expertenschätzungen.
+## Projektübersicht
 
-Die 4 klassischen Inputgrößen für Ölkonzerne:
+Dieses Projekt entwickelt ein stochastisches ROI-Modell, das die inhärenten Unsicherheiten ölindustrieller Investitionsentscheidungen quantifiziert. Anstatt klassischer deterministischer Single-Point-Schätzungen verwendet das Modell Wahrscheinlichkeitsverteilungen für die vier zentralen Inputgrößen und aggregiert diese über 10.000+ Simulationen zu einer Gesamtrisikoverteilung.
 
-CAPEX (Capital Expenditure / Investitionskosten): Bohrungen, Plattformbau, Infrastruktur.
+## Repository-Struktur
 
-OPEX (Operational Expenditure / Betriebskosten): Laufende Kosten für Förderung und Logistik.
+```
+MCS_Paper/
+├── README.md                    # Projektübersicht (diese Datei)
+├── docs/
+│   ├── paper/                    # Wissenschaftliches Paper
+│   │   ├── MCS_Paper_Main.md     # Hauptdokument (~15 Seiten)
+│   │   └── figures/              # Abbildungen und Diagramme
+│   ├── summary/                  # Zusammenfassungen und Notizen
+│   │   └── executive_summary.md # Management Summary
+│   └── methodology/              # Methodische Grundlagen
+│       ├── distributions.md      # Verteilungsannahmen und Begründung
+│       └── roi_model.md          # 数学公式 des ROI-Modells
+├── src/
+│   ├── simulation/
+│   │   ├── mcs_engine.py         # Kern-Simulations-Engine
+│   │   ├── distributions.py     # Verteilungsdefinitionen
+│   │   └── roi_calculator.py    # ROI-Berechnungslogik
+│   ├── visualization/
+│   │   ├── histogram.py         # ROI-Histogramm-Erstellung
+│   │   └── sensitivity.py       # Sensitivitätsanalysen
+│   └── data/
+│       ├── sample_data.py       # Fiktive/anonymisierte Antragsdaten
+│       └── config.py            # Simulationsparameter
+├── interactive/                  # Interaktiver Simulator
+│   └── simulator.html           # Browser-basierter Prototyp
+├── tests/
+│   ├── test_distributions.py
+│   ├── test_roi_calculator.py
+│   └── test_mcs_engine.py
+├── requirements.txt             # Python-Abhängigkeiten
+└── .github/
+    └── workflows/
+        └── ci.yml               # Automatisierte Tests
+```
 
-Fördervolumen (Reserven/Produktion): Wie viel Öl tatsächlich im Boden ist und gefördert werden kann (geologisches Risiko).
+## Die 4 stochastischen Inputgrößen
 
-Ölpreis (Marktpreis): Der zukünftige Verkaufspreis pro Barrel (Marktrisiko).
+| Variable             | Verteilung          | Begründung                                    |
+|----------------------|---------------------|-----------------------------------------------|
+| CAPEX (Investition)  | Dreieck / PERT      | Experten-Schätzung (Min, Max, Modus)         |
+| OPEX (Betriebskosten)| Dreieck / PERT      | Experten-Schätzung (Min, Max, Modus)         |
+| Fördervolumen        | Dreieck / PERT      | Geologisches Risiko, Expertenschätzung        |
+| Ölpreis              | Lognormal           | Finanzmathematischer Standard (Rechtsschiefe) |
 
-Welche Wahrscheinlichkeitsverteilungen nehmen wir an?
-In der Wissenschaft müssen Verteilungen begründet werden. Da ihr mit Antragsdaten (Schätzungen) arbeitet, bieten sich folgende Verteilungen an:
+## ROI-Berechnung
 
-Dreiecksverteilung (Triangular Distribution) oder PERT-Verteilung:
+Für jeden Simulationsschritt *i*:
 
-Einsatzort: CAPEX, OPEX und oft auch Fördervolumen.
+```
+ROI_i = (Ölpreis_i × Fördervolumen_i - CAPEX_i - OPEX_i) / CAPEX_i
+```
 
-Wissenschaftliche Begründung: Bei Anträgen werden selten gigantische historische Datensätze mitgeliefert. Meist geben Ingenieure drei Werte an: einen Worst-Case (Minimum), einen Best-Case (Maximum) und einen Most-Likely-Case (Modus/wahrscheinlichster Wert). Die Dreiecks- oder PERT-Verteilung modelliert genau dieses Expertenwissen perfekt, ohne eine Normalverteilung erzwingen zu müssen (die Ausreißer ins Unendliche hätte).
+Die Aggregation aller Iterationen ergibt die ROI-Verteilung mit:
+- **Erwartungswert (Mean)**: Mittlere Rendite
+- **Standardabweichung**: Volatilität/Risiko
+- **Value at Risk (VaR)**: Wahrscheinlichkeit eines negativen ROI
 
-Lognormalverteilung (Lognormal Distribution):
+## Schnellstart
 
-Einsatzort: Ölpreis.
+```bash
+# Abhängigkeiten installieren
+pip install -r requirements.txt
 
-Wissenschaftliche Begründung: Rohstoffpreise können nicht negativ werden (die Ausnahme von 2020 klammern wir mathematisch meist aus), können aber theoretisch extrem stark ansteigen (Rechtsschiefe). Die Lognormalverteilung ist der finanzmathematische Standard zur Modellierung von Asset- und Rohstoffpreisen (vgl. Black-Scholes-Modell).
+# Simulation ausführen (10.000 Iterationen)
+python src/simulation/mcs_engine.py --iterations 10000
 
-Der ROI berechnet sich in der Simulation dann für jeden der zehntausend Durchläufe grob nach dem Schema:
+# Ergebnisse visualisieren
+python src/visualization/histogram.py
+```
 
-ROI= 
-CAPEX
-( 
-O
-¨
- lpreis×F 
-o
-¨
- rdervolumen)−(CAPEX+OPEX)
-​	
- 
-2. Strukturvorschlag für dein Paper (Gliederung)
+## Team
 
-Um das Ganze wissenschaftlich sauber aufzubauen, empfehle ich folgende Struktur:
+| Rolle        | Verantwortung                              |
+|-------------|--------------------------------------------|
+| CEO         | Strategische Ausrichtung, Koordination     |
+| CTO         | Technische Architektur, Simulations-Engine |
+| CMO         | Kommunikation, Präsentation               |
+| Researcher  | Wissenschaftliche Grundlagen, Literatur    |
 
-1. Einleitung
+## Lizenz
 
-Motivation: Hohe Volatilität und Kapitalintensität in der Ölindustrie.
-
-Problemstellung: Klassische deterministische Modelle (Single-Point-Schätzungen) greifen zu kurz, da sie Unsicherheiten ignorieren. Die Abhängigkeit von reinen Ex-ante-Antragsdaten erfordert robuste Risikomessung.
-
-Zielsetzung: Entwicklung eines stochastischen ROI-Modells mittels Monte-Carlo-Simulation.
-
-2. Theoretischer Hintergrund
-
-Investitionsrechnung unter Unsicherheit: Warum der traditionelle ROI limitiert ist.
-
-Ex-ante vs. Ex-post Steuerung: Theoretische Einordnung eures Setups. Erklärung, dass es sich um eine "Fire-and-Forget"-Investition aus Sicht des Bewertenden handelt, da nach Bewilligung des Antrags keine "In-the-loop"-Eingriffe mehr modelliert werden.
-
-Funktionsweise der Monte-Carlo-Simulation: Das Gesetz der großen Zahlen und die Aggregation von Einzelrisiken zu einer Gesamtrisikoverteilung.
-
-3. Methodik und Modelldesign (Dein Hauptteil)
-
-Variablenselektion: Vorstellung der 4 Inputgrößen (Preis, Volumen, CAPEX, OPEX) und Begründung, warum diese das Risikoprofil dominieren.
-
-Verteilungsannahmen (Stochastische Modellierung): Hier argumentierst du, warum ihr euch für PERT/Dreiecksverteilungen (für Expertenschätzungen) und Lognormalverteilungen (für den Preis) entscheidet.
-
-Mathematisches Modell: Darstellung der ROI-Gleichung, die in der Simulation iteriert wird.
-
-4. Simulation und Ergebnisse
-
-Beschreibung des Datensatzes (fiktive oder anonymisierte Antragsdaten).
-
-Durchführung der Simulation (z.B. 10.000 Iterationen).
-
-Auswertung der Output-Verteilung: Statt eines einzigen ROI-Wertes präsentiert ihr ein Histogramm. Wichtige Kennzahlen hier: Erwartungswert des ROI (Mean), Standardabweichung (Volatilität) und die Wahrscheinlichkeit eines negativen ROI (Value at Risk).
-
-5. Diskussion und Limitationen
-
-Kritische Reflexion: Die Qualität der Simulation hängt von der Güte der Antragsdaten ab ("Garbage in, Garbage out").
-
-Diskussion des fehlenden Ex-post-Einflusses: Wie würde sich das Risiko verändern, wenn man Realoptionen (z.B. die Option, das Projekt später abzubrechen) hätte?
-
-6. Fazit
-
-Zusammenfassung des Mehrwerts der MCS für die finale Investitionsentscheidung.
-
-Um dir ein Gefühl dafür zu geben, wie die Verteilungen dieser vier Variablen das finale Risiko (die Form des Histogramms) beeinflussen, habe ich dir einen interaktiven Simulator gebaut. Du kannst hier mit den Antragsdaten (Min, Max, Modus) spielen und sehen, wie sich die Streuung des ROI verändert.
+Internes Forschungsprojekt — Elias Corp

@@ -1,0 +1,17 @@
+"""Simulation configuration."""
+from src.data.sample_data import (
+    CAPEX_MIN, CAPEX_MODE, CAPEX_MAX,
+    OPEX_MIN, OPEX_MODE, OPEX_MAX,
+    VOLUME_MIN, VOLUME_MODE, VOLUME_MAX,
+    OIL_PRICE_MEAN, OIL_PRICE_SIGMA,
+    DEFAULT_ITERATIONS, DEFAULT_SEED,
+)
+
+# Re-export for easy access
+__all__ = [
+    'CAPEX_MIN', 'CAPEX_MODE', 'CAPEX_MAX',
+    'OPEX_MIN', 'OPEX_MODE', 'OPEX_MAX',
+    'VOLUME_MIN', 'VOLUME_MODE', 'VOLUME_MAX',
+    'OIL_PRICE_MEAN', 'OIL_PRICE_SIGMA',
+    'DEFAULT_ITERATIONS', 'DEFAULT_SEED',
+]

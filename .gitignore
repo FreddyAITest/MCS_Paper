@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Generated outputs
+*.png
+roi_histogram.png
+sensitivity_tornado.png
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store

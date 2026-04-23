@@ -5,29 +5,30 @@
 
 \documentclass[12pt,a4paper]{article}
 
-% ── Sprache und Zeichensatz ──────────────────────────────────────
-\usepackage[ngerman]{babel}
+% -- Sprache und Zeichensatz --------------------------------------
 \usepackage{fontspec}
+\usepackage{polyglossia}
+\setmainlanguage[spelling=new]{german}
 
-% ── Mathematik ───────────────────────────────────────────────────
+% -- Mathematik ---------------------------------------------------
 \usepackage{amsmath,amssymb,mathtools}
 
-% ── Tabellen ─────────────────────────────────────────────────────
+% -- Tabellen -----------------------------------------------------
 \usepackage{booktabs}
 \usepackage{tabularx}
 \usepackage{array}
 
-% ── Grafik ───────────────────────────────────────────────────────
+% -- Grafik -------------------------------------------------------
 \usepackage{graphicx}
 \usepackage{float}
 
-% ── Sonstiges ────────────────────────────────────────────────────
+% -- Sonstiges ----------------------------------------------------
 \usepackage{enumitem}
 \usepackage{hyperref}
 \usepackage{xcolor}
 \usepackage{caption}
 
-% ── Hyperref-Konfiguration ──────────────────────────────────────
+% -- Hyperref-Konfiguration --------------------------------------
 \hypersetup{
   colorlinks=true,
   linkcolor=blue!70!black,
@@ -38,16 +39,16 @@
   pdfsubject={Monte-Carlo-Simulation, Ölindustrie, ROI},
 }
 
-% ── Metadaten ────────────────────────────────────────────────────
+% -- Metadaten ----------------------------------------------------
 \title{\textbf{Monte-Carlo-Simulation zur stochastischen Bewertung von Investitionsrenditen in der Ölindustrie}}
 \author{Elias Corp}
 \date{April 2026}
 
 \begin{document}
 
-% ══════════════════════════════════════════════════════════════════
+% ==================================================================
 % TITELSEITE
-% ══════════════════════════════════════════════════════════════════
+% ==================================================================
 \maketitle
 
 \begin{center}
@@ -74,9 +75,9 @@ Die Öl- und Gasindustrie zeichnet sich durch extreme Kapitalintensität und hoh
 \tableofcontents
 \newpage
 
-% ══════════════════════════════════════════════════════════════════
+% ==================================================================
 % ABSCHNITT 1: EINLEITUNG
-% ══════════════════════════════════════════════════════════════════
+% ==================================================================
 \section{Einleitung}
 
 \subsection{Motivation}
@@ -87,7 +88,7 @@ Die Finanzkrise 2008, der Ölpreiscrash 2014–2016 und die COVID-bedingte Preis
 
 \subsection{Problemstellung}
 
-Herkömmliche Investitionsrechnungen in der Ölindustrie verwenden typischerweise einen festen Ölpreis, feste Fördermengen und feste Kostenansätze. Diese deterministischen Modelle liefern einen einzigen ROI-Wert, der suggeriert: "`Das Projekt rendiert X\%."' Diese Aussage ist jedoch irreführend, weil sie drei kritische Aspekte ignoriert:
+Herkömmliche Investitionsrechnungen in der Ölindustrie verwenden typischerweise einen festen Ölpreis, feste Fördermengen und feste Kostenansätze. Diese deterministischen Modelle liefern einen einzigen ROI-Wert, der suggeriert: \glqq Das Projekt rendiert X\%\grqq{} Diese Aussage ist jedoch irreführend, weil sie drei kritische Aspekte ignoriert:
 
 \begin{enumerate}[label=\arabic*., itemsep=4pt]
   \item \textbf{Unsicherheit der Inputgrößen}: Keine der vier Kernvariablen (CAPEX, OPEX, Fördervolumen, Ölpreis) ist mit Sicherheit vorhersehbar.
@@ -109,9 +110,9 @@ Das Ziel dieses Papers ist die Entwicklung und Darstellung eines stochastischen 
   \item Die Limitationen des Ansatzes kritisch reflektieren
 \end{itemize}
 
-% ══════════════════════════════════════════════════════════════════
+% ==================================================================
 % ABSCHNITT 2: THEORETISCHER HINTERGRUND
-% ══════════════════════════════════════════════════════════════════
+% ==================================================================
 \section{Theoretischer Hintergrund}
 
 \subsection{Investitionsrechnung unter Unsicherheit}
@@ -128,7 +129,7 @@ bzw.\ in der ölindustriellen Spezifikation:
 \text{ROI} = \frac{\text{Ölpreis} \times \text{Fördervolumen} - \text{CAPEX} - \text{OPEX}}{\text{CAPEX}}
 \end{equation}
 
-Das Problem: Wenn jede Variable eine Wahrscheinlichkeitsverteilung besitzt, wird der ROI selbst zu einer Zufallsvariablen. Der "`ROI"' ist dann keine Zahl mehr, sondern eine Verteilung — und die Form dieser Verteilung enthält die entscheidenden Informationen über das Risiko.
+Das Problem: Wenn jede Variable eine Wahrscheinlichkeitsverteilung besitzt, wird der ROI selbst zu einer Zufallsvariablen. Der \glqq ROI\grqq{} ist dann keine Zahl mehr, sondern eine Verteilung — und die Form dieser Verteilung enthält die entscheidenden Informationen über das Risiko.
 
 \subsection{Ex-ante vs.\ Ex-post Steuerung}
 
@@ -138,7 +139,7 @@ Ein zentraler methodischer Punkt unseres Ansatzes betrifft die Unterscheidung zw
 
 \textbf{Ex-post (nachträglich)}: Nach Projektabschluss können die tatsächlichen Kosten und Erträge gemessen werden.
 
-Unser Modell ist rein \textbf{Ex-ante} konzipiert: Es modelliert die Investitionsentscheidung aus der Perspektive des Bewertenden zum Zeitpunkt $t_0$, bevor das Projekt startet. Dies bedeutet insbesondere, dass wir von einer "`Fire-and-Forget"'-Investition ausgehen: Nach Bewilligung des Antrags erfolgen keine weiteren adaptiven Eingriffe (Realoptionen werden nicht modelliert — siehe Limitationen in Abschnitt~\ref{sec:limitationen}).
+Unser Modell ist rein \textbf{Ex-ante} konzipiert: Es modelliert die Investitionsentscheidung aus der Perspektive des Bewertenden zum Zeitpunkt $t_0$, bevor das Projekt startet. Dies bedeutet insbesondere, dass wir von einer \glqq Fire-and-Forget\grqq{}-Investition ausgehen: Nach Bewilligung des Antrags erfolgen keine weiteren adaptiven Eingriffe (Realoptionen werden nicht modelliert — siehe Limitationen in Abschnitt~\ref{sec:limitationen}).
 
 Diese Ex-ante-Perspektive ist konservativer als ein Realoptionsansatz, produziert aber realistischere Risikoprofile als deterministische Einzelpunktschätzungen.
 
@@ -157,9 +158,9 @@ Die Vorgehensweise ist wie folgt:
 
 Der zentrale Erkenntnisgewinn liegt darin, dass die ROI-Verteilung nicht nur einen Erwartungswert liefert, sondern die gesamte Risikobandbreite zeigt — einschließlich der Wahrscheinlichkeit, dass das Projekt Verluste macht ($\text{ROI} < 0$).
 
-% ══════════════════════════════════════════════════════════════════
+% ==================================================================
 % ABSCHNITT 3: METHODIK UND MODELLDESIGN
-% ══════════════════════════════════════════════════════════════════
+% ==================================================================
 \section{Methodik und Modelldesign}
 
 \subsection{Variablenselektion}
@@ -324,9 +325,9 @@ Bootstrap-Konfidenz & 95\% & Standard in der Praxis \\
 \caption{Simulationsparameter und ihre Begründung}
 \end{table}
 
-% ══════════════════════════════════════════════════════════════════
+% ==================================================================
 % ABSCHNITT 4: SIMULATION UND ERGEBNISSE
-% ══════════════════════════════════════════════════════════════════
+% ==================================================================
 \section{Simulation und Ergebnisse}
 
 \subsection{Beschreibung des Datensatzes}
@@ -445,9 +446,9 @@ OPEX           & ${\sim}8\%$  & Relativ stabilere Kostenstruktur \\
 
 Die Sensitivitätsanalyse zeigt: Der Ölpreis dominiert das Risikoprofil. Dies ist nicht überraschend — die Lognormalverteilung hat eine höhere intrinsische Varianz als die Dreiecksverteilungen, und der Ölpreis wirkt multiplikativ auf den Umsatz.
 
-% ══════════════════════════════════════════════════════════════════
+% ==================================================================
 % ABSCHNITT 5: DISKUSSION UND LIMITATIONEN
-% ══════════════════════════════════════════════════════════════════
+% ==================================================================
 \section{Diskussion und Limitationen}
 \label{sec:limitationen}
 
@@ -471,7 +472,7 @@ Unser Basis-Modell geht davon aus, dass die vier Inputvariablen unabhängig sind
 
 \subsection{Fehlende Ex-post-Einflüsse und Realoptionen}
 
-Wie in Abschnitt~2.2 dargelegt, modellieren wir eine "`Fire-and-Forget"'-Investition. In der Realität haben Manager die Möglichkeit:
+Wie in Abschnitt~2.2 dargelegt, modellieren wir eine \glqq Fire-and-Forget\grqq{}-Investition. In der Realität haben Manager die Möglichkeit:
 
 \begin{itemize}[itemsep=2pt]
   \item \textbf{Abbruchoption (\textit{Abandon Option})}: Das Projekt bei drohendem Verlust vorzeitig zu stoppen
@@ -489,9 +490,9 @@ Das Modell verwendet feste Verteilungsparameter. In der Praxis könnten sich die
 
 Die Simulation betrachtet ein einzelnes Projekt isoliert. In einem Portfolio-Kontext können Diversifikationseffekte auftreten: Die Korrelation zwischen verschiedenen Projekten reduziert das Gesamtrisiko des Portfolios. Eine Portfolioperspektive wäre ein nächster logischer Schritt.
 
-% ══════════════════════════════════════════════════════════════════
+% ==================================================================
 % ABSCHNITT 6: FAZIT
-% ══════════════════════════════════════════════════════════════════
+% ==================================================================
 \section{Fazit}
 
 \subsection{Zusammenfassung}
@@ -517,9 +518,9 @@ Folgende Erweiterungen werden für die nächste Iteration empfohlen:
   \item \textbf{Bayesian Updating} zur Integration neuer Informationen im Projektverlauf
 \end{itemize}
 
-% ══════════════════════════════════════════════════════════════════
+% ==================================================================
 % LITERATURHINWEISE
-% ══════════════════════════════════════════════════════════════════
+% ==================================================================
 \begin{thebibliography}{6}
 
 \bibitem{glasserman2004}
